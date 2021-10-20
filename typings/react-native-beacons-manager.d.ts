@@ -1,3 +1,5 @@
+import { EventEmitter } from "react-native";
+
 declare module 'react-native-beacons-manager' {
 
   export interface BeaconRegion {
@@ -149,6 +151,8 @@ declare module 'react-native-beacons-manager' {
     requestStateForRegion(
       region: BeaconRegion
     ): void;
+
+    BeaconsEventEmitter: EventEmitter;
   }
 
   const beacons: Beacons;
