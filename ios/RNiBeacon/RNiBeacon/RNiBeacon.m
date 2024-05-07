@@ -86,9 +86,7 @@ RCT_EXPORT_MODULE()
   unsigned short mj = (unsigned short) major;
   unsigned short mi = (unsigned short) minor;
 
-  CLBeaconRegion *beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:beaconUUID major:mj
-                                                                         minor:mi
-                                                                    identifier:identifier];
+  CLBeaconRegion *beaconRegion = [[CLBeaconRegion alloc] initWithUUID:beaconUUID major:major identifier:identifier];
 
   NSLog(@"createBeaconRegion with: identifier - uuid - major - minor");
   beaconRegion.notifyOnEntry = YES;
@@ -106,9 +104,7 @@ RCT_EXPORT_MODULE()
 
   unsigned short mj = (unsigned short) major;
 
-  CLBeaconRegion *beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:beaconUUID
-                                                                         major:mj
-                                                                    identifier:identifier];
+  CLBeaconRegion *beaconRegion = [[CLBeaconRegion alloc] initWithUUID:beaconUUID major:major identifier:identifier];
 
   NSLog(@"createBeaconRegion with: identifier - uuid - major");
   beaconRegion.notifyOnEntry = YES;
@@ -123,8 +119,7 @@ RCT_EXPORT_MODULE()
 {
   NSUUID *beaconUUID = [[NSUUID alloc] initWithUUIDString:uuid];
 
-  CLBeaconRegion *beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:beaconUUID
-                                                                    identifier:identifier];
+  CLBeaconRegion *beaconRegion = [[CLBeaconRegion alloc] initWithUUID:beaconUUID identifier:identifier];
 
   NSLog(@"createBeaconRegion with: identifier - uuid");
   beaconRegion.notifyOnEntry = YES;
@@ -133,6 +128,34 @@ RCT_EXPORT_MODULE()
 
   return beaconRegion;
 }
+
+- (CLBeaconIdentityConstraint *) createBeaconIdentityConstraintWithUUID: (NSString *)uuid  major: (NSInteger) major minor: (NSInteger) minor {
+    NSUUID *beaconUUID = [[NSUUID alloc] initWithUUIDString:uuid];
+    CLBeaconIdentityConstraint * constraint = [[CLBeaconIdentityConstraint alloc] initWithUUID:beaconUUID major:major minor:minor];
+    
+    NSLog(@"createBeaconIdentityConstrainet with: uuid - major - minor");
+    
+    return constraint;
+}
+
+- (CLBeaconIdentityConstraint *) createBeaconIdentityConstraintWithUUID: (NSString *)uuid  major: (NSInteger) major {
+    NSUUID *beaconUUID = [[NSUUID alloc] initWithUUIDString:uuid];
+    CLBeaconIdentityConstraint * constraint = [[CLBeaconIdentityConstraint alloc] initWithUUID:beaconUUID major: major];
+    
+    NSLog(@"createBeaconIdentityConstrainet with: uuid - major");
+    
+    return constraint;
+}
+
+- (CLBeaconIdentityConstraint *) createBeaconIdentityConstraintWithUUID: (NSString *)uuid {
+    NSUUID *beaconUUID = [[NSUUID alloc] initWithUUIDString:uuid];
+    CLBeaconIdentityConstraint * constraint = [[CLBeaconIdentityConstraint alloc] initWithUUID:beaconUUID];
+    
+    NSLog(@"createBeaconIdentityConstrainet with: uuid");
+    
+    return constraint;
+}
+
 
 -(CLBeaconRegion *) convertDictToBeaconRegion: (NSDictionary *) dict
 {
@@ -153,25 +176,41 @@ RCT_EXPORT_MODULE()
   }
 }
 
+-(CLBeaconIdentityConstraint *) convertDictToBeaconIdentityConstraint: (NSDictionary *) dict
+{
+  if (dict[@"minor"] == nil) {
+    if (dict[@"major"] == nil) {
+      return [self createBeaconIdentityConstraintWithUUID:[RCTConvert NSString:dict[@"uuid"]]];
+    } else {
+      return [self createBeaconIdentityConstraintWithUUID:[RCTConvert NSString:dict[@"uuid"]]
+                                major:[RCTConvert NSInteger:dict[@"major"]]];
+    }
+  } else {
+    return [self createBeaconIdentityConstraintWithUUID:[RCTConvert NSString:dict[@"uuid"]]
+                              major:[RCTConvert NSInteger:dict[@"major"]]
+                              minor:[RCTConvert NSInteger:dict[@"minor"]]];
+  }
+}
+
 -(NSDictionary *) convertBeaconRegionToDict: (CLBeaconRegion *) region
 {
   if (region.minor == nil) {
     if (region.major == nil) {
       return @{
                @"identifier": region.identifier,
-               @"uuid": [region.proximityUUID UUIDString],
+               @"uuid": [region.UUID UUIDString],
                };
     } else {
       return @{
                @"identifier": region.identifier,
-               @"uuid": [region.proximityUUID UUIDString],
+               @"uuid": [region.UUID UUIDString],
                @"major": region.major
                };
     }
   } else {
     return @{
              @"identifier": region.identifier,
-             @"uuid": [region.proximityUUID UUIDString],
+             @"uuid": [region.UUID UUIDString],
              @"major": region.major,
              @"minor": region.minor
              };
@@ -225,7 +264,8 @@ RCT_EXPORT_METHOD(getMonitoredRegions:(RCTResponseSenderBlock)callback)
 
 RCT_EXPORT_METHOD(startMonitoringForRegion:(NSDictionary *) dict)
 {
-  [self.locationManager startMonitoringForRegion:[self convertDictToBeaconRegion:dict]];
+    CLBeaconIdentityConstraint *constraint = [self convertDictToBeaconIdentityConstraint:dict];
+    [self.locationManager startRangingBeaconsSatisfyingConstraint:constraint];
 }
 
 RCT_EXPORT_METHOD(startRangingBeaconsInRegion:(NSDictionary *) dict)
@@ -233,13 +273,15 @@ RCT_EXPORT_METHOD(startRangingBeaconsInRegion:(NSDictionary *) dict)
   if ([dict[@"identifier"] isEqualToString:kEddystoneRegionID]) {
       [_eddyStoneScanner startScanning];
   } else {
-      [self.locationManager startRangingBeaconsInRegion:[self convertDictToBeaconRegion:dict]];
+      CLBeaconIdentityConstraint *constraint = [self convertDictToBeaconIdentityConstraint:dict];
+      [self.locationManager startRangingBeaconsSatisfyingConstraint:constraint];
   }
 }
 
 RCT_EXPORT_METHOD(stopMonitoringForRegion:(NSDictionary *) dict)
 {
-  [self.locationManager stopMonitoringForRegion:[self convertDictToBeaconRegion:dict]];
+    CLBeaconIdentityConstraint *constraint = [self convertDictToBeaconIdentityConstraint:dict];
+    [self.locationManager stopRangingBeaconsSatisfyingConstraint:constraint];
 }
 
 RCT_EXPORT_METHOD(stopRangingBeaconsInRegion:(NSDictionary *) dict)
@@ -247,7 +289,8 @@ RCT_EXPORT_METHOD(stopRangingBeaconsInRegion:(NSDictionary *) dict)
   if ([dict[@"identifier"] isEqualToString:kEddystoneRegionID]) {
     [self.eddyStoneScanner stopScanning];
   } else {
-    [self.locationManager stopRangingBeaconsInRegion:[self convertDictToBeaconRegion:dict]];
+    CLBeaconIdentityConstraint *constraint = [self convertDictToBeaconIdentityConstraint:dict];
+    [self.locationManager stopRangingBeaconsSatisfyingConstraint:constraint];
   }
 }
 
@@ -301,7 +344,7 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
     }
 }
 
--(void)locationManager:(CLLocationManager *)manager rangingBeaconsDidFailForRegion:(CLBeaconRegion *)region withError:(NSError *)error
+- (void)locationManager:(CLLocationManager *)manager didFailRangingBeaconsForConstraint:(CLBeaconIdentityConstraint *)beaconConstraint error:(NSError *)error
 {
   NSLog(@"Failed ranging region: %@", error);
 }
@@ -334,8 +377,7 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
     }
 }
 
--(void) locationManager:(CLLocationManager *)manager didRangeBeacons:
-(NSArray *)beacons inRegion:(CLBeaconRegion *)region
+-(void) locationManager:(CLLocationManager *)manager didRangeBeacons:(NSArray *)beacons satisfyingConstraint:(CLBeaconIdentityConstraint *)beaconConstraint
 {
   if (self.dropEmptyRanges && beacons.count == 0) {
     return;
@@ -344,7 +386,7 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
 
   for (CLBeacon *beacon in beacons) {
     [beaconArray addObject:@{
-                             @"uuid": [beacon.proximityUUID UUIDString],
+                             @"uuid": [beacon.UUID UUIDString],
                              @"major": beacon.major,
                              @"minor": beacon.minor,
 
@@ -357,8 +399,7 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
 
   NSDictionary *event = @{
                           @"region": @{
-                              @"identifier": region.identifier,
-                              @"uuid": [region.proximityUUID UUIDString],
+                              @"uuid": [beaconConstraint.UUID UUIDString],
                               },
                           @"beacons": beaconArray
                           };
