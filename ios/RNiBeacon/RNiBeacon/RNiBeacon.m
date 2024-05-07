@@ -83,9 +83,6 @@ RCT_EXPORT_MODULE()
 {
   NSUUID *beaconUUID = [[NSUUID alloc] initWithUUIDString:uuid];
 
-  unsigned short mj = (unsigned short) major;
-  unsigned short mi = (unsigned short) minor;
-
   CLBeaconRegion *beaconRegion = [[CLBeaconRegion alloc] initWithUUID:beaconUUID major:major identifier:identifier];
 
   NSLog(@"createBeaconRegion with: identifier - uuid - major - minor");
@@ -101,8 +98,6 @@ RCT_EXPORT_MODULE()
                                  major: (NSInteger) major
 {
   NSUUID *beaconUUID = [[NSUUID alloc] initWithUUIDString:uuid];
-
-  unsigned short mj = (unsigned short) major;
 
   CLBeaconRegion *beaconRegion = [[CLBeaconRegion alloc] initWithUUID:beaconUUID major:major identifier:identifier];
 
@@ -133,7 +128,7 @@ RCT_EXPORT_MODULE()
     NSUUID *beaconUUID = [[NSUUID alloc] initWithUUIDString:uuid];
     CLBeaconIdentityConstraint * constraint = [[CLBeaconIdentityConstraint alloc] initWithUUID:beaconUUID major:major minor:minor];
     
-    NSLog(@"createBeaconIdentityConstrainet with: uuid - major - minor");
+    NSLog(@"createBeaconIdentityConstraint with: uuid - major - minor");
     
     return constraint;
 }
@@ -142,7 +137,7 @@ RCT_EXPORT_MODULE()
     NSUUID *beaconUUID = [[NSUUID alloc] initWithUUIDString:uuid];
     CLBeaconIdentityConstraint * constraint = [[CLBeaconIdentityConstraint alloc] initWithUUID:beaconUUID major: major];
     
-    NSLog(@"createBeaconIdentityConstrainet with: uuid - major");
+    NSLog(@"createBeaconIdentityConstraint with: uuid - major");
     
     return constraint;
 }
@@ -151,7 +146,7 @@ RCT_EXPORT_MODULE()
     NSUUID *beaconUUID = [[NSUUID alloc] initWithUUIDString:uuid];
     CLBeaconIdentityConstraint * constraint = [[CLBeaconIdentityConstraint alloc] initWithUUID:beaconUUID];
     
-    NSLog(@"createBeaconIdentityConstrainet with: uuid");
+    NSLog(@"createBeaconIdentityConstraint with: uuid");
     
     return constraint;
 }
